@@ -47,3 +47,16 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+data/other/BioTIMEQuery_24_06_2021.csv
+.DS_Store
+*.Rproj
+tier0/
+tidy/
+*.csv
+*.xlsx
+*.tiff
