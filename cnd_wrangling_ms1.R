@@ -93,24 +93,39 @@ dt_mutate <- dt_og |>
   mutate(vertebrate_n = if_else(vert == "vertebrate" & dmperind_g_ind != 0, 1, 0),
          invertebrate_n = if_else(vert == "invertebrate" & dmperind_g_ind != 0, 1, 0))
 
-### remove all invertebrate data from FCE & VCR - makes up very small fraction and neither project poised at
-### to monitor invertebrate populations/communities
+### remove all invertebrate data from FCE & VCR - makes up very small fraction 
+### and neither project poised to monitor invertebrate populations/communities
 dt_mutate_filter <- dt_mutate |> 
   filter(!(project %in% c("FCE", "VCR") & vert == "invertebrate")) |> 
   mutate(vert = ifelse(project %in% c("CCE", "NGA"), "invertebrate", vert))
 
+### remove projects we decided to filter out at June 2024 meeting for
+### manuscript one
 dt_mutate_filter_2 <- dt_mutate_filter |> 
   filter(vert == "vertebrate",
          !project %in% c("NGA", "CCE", "PIE"))
 
+###########################################################################
+# read out the data at this point for diversity calculations --------------
 # write_csv(dt_mutate_filter_2, "local_data/filtered_dataset.csv")
+###########################################################################
 
-### calculate max size of community at this resolution so we can calculate mean max size of species within community
+###########################################################################
+### calculate max size of community at this resolution so we can calculate 
+### mean max size of species within community
+
 dt_mutate_filter_3 <- dt_mutate_filter_2 |>   
-  group_by(project, habitat, vert, year, month, site, subsite_level1, subsite_level2, subsite_level3, scientific_name) |>
+  group_by(project, habitat, vert, year, month, site, subsite_level1, 
+           subsite_level2, subsite_level3, scientific_name) |>
   mutate(max_size = max(dmperind_g_ind, na.rm = TRUE),
          min_size = min(dmperind_g_ind, na.rm = TRUE),
          mean_size = mean(dmperind_g_ind, na.rm = TRUE))
+##########################################################################
+
+##########################################################################
+### summarize data at "finest" scale for each individual program (e.g.,
+### transect or bout) - LK updates at June meeting allow appropriate
+### resolution for PISCO datasets
 
 dt_total <- dt_mutate_filter_3 |> 
   group_by(project, habitat, vert, year, month, site, subsite_level1, subsite_level2, subsite_level3) |> 
@@ -118,16 +133,19 @@ dt_total <- dt_mutate_filter_3 |>
     total_nitrogen_m = sum(nind_ug_hr * density_num_m, na.rm = TRUE),
     total_nitrogen_m2 = sum(nind_ug_hr * density_num_m2, na.rm = TRUE),
     total_nitrogen_m3 = sum(nind_ug_hr * density_num_m3, na.rm = TRUE),
+    ### create column with total_nitrogen contribution for each program, regardless of units
     total_nitrogen = sum(total_nitrogen_m + total_nitrogen_m2 + total_nitrogen_m3, na.rm = TRUE),
     ### calculate total phosphorus supply at each sampling unit and then sum to get column with all totals
     total_phosphorus_m = sum(pind_ug_hr * density_num_m, na.rm = TRUE),
     total_phosphorus_m2 = sum(pind_ug_hr * density_num_m2, na.rm = TRUE),
     total_phosphorus_m3 = sum(pind_ug_hr * density_num_m3, na.rm = TRUE),
+    ### create column with total_phosphorus contribution for each program, regardless of units
     total_phosphorus = sum(total_phosphorus_m + total_phosphorus_m2 + total_phosphorus_m3, na.rm = TRUE),
     ### calculate total biomass at each sampling unit and then sum to get column with all totals
     total_bm_m = sum(dmperind_g_ind*density_num_m, na.rm = TRUE),
     total_bm_m2 = sum(dmperind_g_ind*density_num_m2, na.rm = TRUE),
     total_bm_m3 = sum(dmperind_g_ind*density_num_m3, na.rm = TRUE),
+    ### create column with total_biomass for each program, regardless of units
     total_biomass = sum(total_bm_m + total_bm_m2 + total_bm_m3, na.rm = TRUE),
     ### calculate species richness
     n_spp = n_distinct(scientific_name[dmperind_g_ind != 0]),
@@ -141,7 +159,7 @@ dt_total <- dt_mutate_filter_3 |>
                 -total_bm_m, -total_bm_m2, -total_bm_m3) |> 
   arrange(project, habitat, vert, year, month, site, subsite_level1, subsite_level2, subsite_level3)
   
-
+### check for NAs
 na_count_per_column <- sapply(dt_total, function(x) sum(is.na(x)))
 print(na_count_per_column) #yay
 
@@ -149,20 +167,25 @@ print(na_count_per_column) #yay
 # add strata of interest to each project ----------------------------------
 ###########################################################################
 
+### set up strata_list such that the "Not Available" aligns with dt_total
 strata_list1 <- strata_list %>%
   mutate(subsite_level1 = replace_na(subsite_level1, "Not Available"),
          subsite_level2 = replace_na(subsite_level2, "Not Available"),
          subsite_level3 = replace_na(subsite_level3, "Not Available")) |> 
+  ### LK suggested to remove subsite_level 3 given updates to PISCO 
   select(-subsite_level3) |> 
   distinct()
 
+### join together the datasets of nutrient supply and biomass with strata
 dt_total_strata <- left_join(dt_total, 
                              strata_list1, 
                              by = c("project", "habitat", "site",
                                     "subsite_level1", "subsite_level2")) |> 
+  ### special case in which "site" column depicts strata for some programs 
   mutate(strata = if_else(is.na(ecoregion_habitat), site, ecoregion_habitat)) |> 
   dplyr::select(-ecoregion_habitat)
 
+### Check NAs
 na_count_per_column <- sapply(dt_total_strata, function(x) sum(is.na(x)))
 print(na_count_per_column) #yayay
 
@@ -172,9 +195,10 @@ print(na_count_per_column) #yayay
 
 dt_total_strata_date <- dt_total_strata |>
   ### create project-habitat column since some projects sample multiple habitats (i.e., SBC ocean & beach)
-  unite("projecthabitat", project, habitat, sep = "-", remove = FALSE) |> 
-  ### create date columns for timeseries plotting
-  mutate(sdate = ymd(paste(year, month, "01", sep = "-"))) 
+  unite("projecthabitat", project, habitat, sep = "-", remove = FALSE)
+  # ### create date columns for timeseries plotting - do not need this, 
+  # ### unless we want to generate time series plot and we can do that later
+  # mutate(sdate = ymd(paste(year, month, "01", sep = "-"))) 
 
 ###########################################################################
 # set up individual projects/habitats for analyses and plotting -----------
@@ -232,7 +256,7 @@ fce <- dt_total_strata_date |>
   ### added new resolution group wants considered for examination -> functionally the "site" for each project
   unite(color2, c(site, subsite_level1), sep = "-", remove = FALSE)
   ### reverts back to hydrologic year to make more sense of dataset - data is collected across calendar years but considered sequential (i.e., November - June)
-  ### this was done in step5
+  ### this was done in step5 in June 2024 - so copy below line out, FCE needs to be set up by "hydro year"
   # mutate(year = if_else(project == "FCE" & month < 10, year - 1, year))
 
 ### MCR-ocean
@@ -330,9 +354,8 @@ dat_ready_2 <- dat_ready |>
   ### rename columns to be more representative/clean
   rename(site = color2,
          program = Project, 
-         habitat = Habitat,
-         date = sdate) |> 
-  dplyr::select(program, habitat, year, month, date, vert, everything())
+         habitat = Habitat) |> 
+  dplyr::select(program, habitat, year, month, vert, everything())
 
 glimpse(dat_ready_2)
 unique(dat_ready_2$habitat)
@@ -340,7 +363,10 @@ unique(dat_ready_2$habitat)
 dat_ready_3 <- dat_ready_2 |> 
   filter(site != "RB-17")
 
-# write_csv(dat_ready_3, "local_data/model_data_all_final_07032024.csv")
+glimpse(dat_ready_3)
+unique(dat_ready_3$site)
+
+# write_csv(dat_ready_3, "local_data/model_data_all_final_07092024.csv")
 
 # step 2 ------------------------------------------------------------------
 
