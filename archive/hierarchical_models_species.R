@@ -2,7 +2,7 @@
 ###author(s): Mack White
 ###goal(s): hierarchical models for species evenness and richness
 ###date(s): June 2024
-###note(s): 
+###note(s): testing repo name change
 
 ###########################################################################
 # Housekeeping ------------------------------------------------------------
