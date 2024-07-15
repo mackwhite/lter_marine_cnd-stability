@@ -1,6 +1,6 @@
 ###project: LTER Marine Consumer Nutrient Dynamic Synthesis Working Group
 ###author(s): MW, AC, LK, WRJ
-###goal(s): Wrangling raw data such that it is ready for analysis
+###goal(s): Wrangling raw CND data such that it is ready for analysis
 ###date(s): July 2024
 ###note(s): 
 

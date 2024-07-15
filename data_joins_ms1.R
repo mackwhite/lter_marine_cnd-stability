@@ -15,12 +15,16 @@ librarian::shelf(tidyverse, googledrive, vegan, readxl, codyn, purrr)
 # read in csv files for joins ---------------------------------------------
 ###########################################################################
 
-cnd <- read_csv("local_data/cnd_stability_site_averages_07092024.csv")
-comm <- read_csv("local_data/community_data_site_averages_07092024.csv")
-turnsynch <- read_csv("local_data/turnover_synchrony_site_data.csv") |> 
-      separate(col = psh_vec, into = c("program", "habitat", "site"), sep = ":")
+cnd_comm <- read_csv("local_data/cnd_mdl_data_07152024.csv") |> 
+      mutate(program = as.factor(program),
+             habitat = as.factor(habitat),
+             site = as.factor(site))
 
-cnd_comm <- left_join(cnd, comm)
+turnsynch <- read_csv("local_data/turnover_synchrony_07152024.csv") |> 
+      mutate(program = as.factor(program),
+             habitat = as.factor(habitat),
+             site = as.factor(site))
+
 all <- left_join(cnd_comm, turnsynch)
 
-# write_csv(all, "local_data/final_model_data_072024.csv")
+write_csv(all, "local_data/final_model_data_07152024.csv")
