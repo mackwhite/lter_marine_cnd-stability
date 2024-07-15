@@ -4,7 +4,7 @@
 librarian::shelf(tidyverse, googledrive, vegan, readxl, codyn, purrr)
 
 ### read in clean excretion and strata data from google drive
-filter_dt <-read_csv("local_data/filtered_dataset.csv")
+filter_dt <- read_csv("local_data/filtered_dataset.csv")
 
 strata_list <- readxl::read_excel(path = file.path("tier2", "strata_class.xlsx"),na=".") |> 
   ### remove decimals from numbered sites
