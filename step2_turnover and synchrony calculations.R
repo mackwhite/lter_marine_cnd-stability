@@ -196,7 +196,7 @@ vcr <- dt_total_strata |>
              color = strata,
              units = 'm2') |> 
       ### added new resolution group wants considered for examination -> functionally the "site" for each project
-      unite(color2, c(subsite_level1, color), sep = "-", remove = FALSE)
+      unite(color2, c(site, subsite_level1, color), sep = "-", remove = FALSE)
 
 ### binding everything back together, removing index row generated when saving out of R
 ## and arranging the data by date
@@ -281,11 +281,13 @@ species_presence <- dat_ready_4 |>
       group_by(program, habitat, year, site, scientific_name) |> 
       summarize(mean_total_bm = mean(total_biomass),
                 mean_total_dens = mean(total_density)) |> 
-      ungroup() |> 
-      mutate(mean_total_dens_1p = ifelse(
-            mean_total_dens > 0, mean_total_dens + 1, 0), 
-            incidence = ifelse(
-                  mean_total_dens > 0, 1, 0))
+      ungroup()
+      ### decided we did not need this for synchrony and beta calculations with
+      ### with WRJ on 07/16/2024
+      # mutate(mean_total_dens_1p = ifelse(
+      #       mean_total_dens > 0, mean_total_dens + 1, 0), 
+      #       incidence = ifelse(
+      #             mean_total_dens > 0, 1, 0))
 
 testy <- species_presence |> 
       mutate(psh = paste(program, habitat, site, sep = ":"))
@@ -299,7 +301,7 @@ for (i in 1:length(psh_vec)){
       temp <- testy |> 
             filter(psh == psh_vec[i])
       beta_temp <- turnover(df = temp, time.var = "year", 
-                            abundance.var = "mean_total_dens_1p", 
+                            abundance.var = "mean_total_dens", 
                             species.var = "scientific_name",
                             metric = "total")
       
@@ -318,4 +320,4 @@ for (i in 1:length(psh_vec)){
 df_temp_final <- df_temp |> 
       separate(col = psh_vec, into = c("program", "habitat", "site"), sep = ":")
 
-# write_csv(df_temp_final, "local_data/turnover_synchrony_07152024.csv")
+# write_csv(df_temp_final, "local_data/turnover_synchrony_07162024.csv")

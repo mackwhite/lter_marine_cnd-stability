@@ -148,6 +148,7 @@ dt_total <- dt_mutate_1 |>
     Species_Richness = length(unique(scientific_name[dmperind_g_ind != 0])),
     # Species_Shannon_Diversity_Index = diversity(x = table(scientific_name), index = "shannon"),
     Species_Inverse_Simpson_Diversity_Index = diversity(x = table(scientific_name[dmperind_g_ind != 0]), index = "invsimpson"),
+    Trophic_Richness = length(unique(diet_cat[dmperind_g_ind != 0])),
     # Trophic_Shannon_Diversity_Index = diversity(x = table(diet_cat), index = "shannon"),
     Trophic_Inverse_Simpson_Diversity_Index = diversity(x = table(diet_cat[dmperind_g_ind != 0]), index = "invsimpson")) |> 
   ungroup() |>
@@ -168,7 +169,8 @@ dt_total_clean <- dt_total |>
                                                               Trophic_Inverse_Simpson_Diversity_Index)) |> 
       rename(species_richness = Species_Richness,
              species_diversity = Species_Inverse_Simpson_Diversity_Index, 
-             trophic_diversity = Trophic_Inverse_Simpson_Diversity_Index)
+             trophic_diversity = Trophic_Inverse_Simpson_Diversity_Index,
+             trophic_richness = Trophic_Richness)
 
 ###########################################################################
 # add strata of interest to each project ----------------------------------
@@ -266,7 +268,7 @@ vcr <- dt_total_strata |>
          color = strata,
          units = 'm2') |> 
   ### added new resolution group wants considered for examination -> functionally the "site" for each project
-  unite(color2, c(subsite_level1, color), sep = "-", remove = FALSE)
+  unite(color2, c(site, subsite_level1, color), sep = "-", remove = FALSE)
 
 ### binding everything back together, removing index row generated when saving out of R
 ## and arranging the data by date
@@ -356,6 +358,14 @@ model_dt <- dat_ready_3 |>
             trophic_diversity_stability = 1/cv_trophic_diversity)|> 
       ungroup()
 
-glimpse(model_dt)
+model_dt_1 <- model_dt |> 
+      select(program, habitat, site, n_stability, p_stability, mean_max_ss, mean_spp_rich, mean_species_diversity, mean_trophic_diversity)
 
-# write_csv(model_dt, "local_data/cnd_mdl_data_07152024.csv")
+glimpse(model_dt_1)
+
+# write_csv(model_dt_1, "local_data/cnd_mdl_data_07162024.csv")
+
+# model_dt_1 |> 
+#       ggplot(aes(n_stability, p_stability))+
+#       geom_point()+
+#       geom_abline()
