@@ -332,6 +332,7 @@ model_dt <- dat_ready_3 |>
                 max_size_ann = mean(max_size),
                 species_richness_ann = mean(species_richness),
                 species_diversity_ann = mean(species_diversity),
+                trophic_richness_ann = mean(trophic_richness),
                 trophic_diversity_ann = mean(trophic_diversity)) |> 
   ungroup() |> 
   group_by(program, habitat, site) |> 
@@ -347,19 +348,23 @@ model_dt <- dat_ready_3 |>
             mean_max_ss = mean(max_size_ann),
             cv_max_ss = (sd(max_size_ann, na.rm = TRUE) / mean(max_size_ann, na.rm = TRUE)),
             max_size_stability = 1/cv_max_ss,
-            mean_spp_rich = mean(species_richness_ann),
-            cv_spp_rich = (sd(species_richness_ann, na.rm = TRUE) / mean(species_richness_ann, na.rm = TRUE)),
-            spp_rich_stability = 1/cv_spp_rich,
+            mean_species_richness = mean(species_richness_ann),
+            cv_species_richness = (sd(species_richness_ann, na.rm = TRUE) / mean(species_richness_ann, na.rm = TRUE)),
+            species_richness_stability = 1/cv_species_richness,
             mean_species_diversity = mean(species_diversity_ann),
             cv_species_diversity = (sd(species_diversity_ann, na.rm = TRUE) / mean(species_diversity_ann, na.rm = TRUE)),
             species_diversity_stability = 1/cv_species_diversity,
+            mean_trophic_richness = mean(trophic_richness_ann),
+            cv_trophic_richness = (sd(trophic_richness_ann, na.rm = TRUE) / mean(trophic_richness_ann, na.rm = TRUE)),
+            trophic_richness_stability = 1/cv_trophic_richness,
             mean_trophic_diversity = mean(trophic_diversity_ann),
             cv_trophic_diversity = (sd(trophic_diversity_ann, na.rm = TRUE) / mean(trophic_diversity_ann, na.rm = TRUE)),
             trophic_diversity_stability = 1/cv_trophic_diversity)|> 
       ungroup()
 
 model_dt_1 <- model_dt |> 
-      select(program, habitat, site, n_stability, p_stability, mean_max_ss, mean_spp_rich, mean_species_diversity, mean_trophic_diversity)
+      select(program, habitat, site, n_stability, p_stability, mean_max_ss, mean_species_richness, 
+             mean_species_diversity, mean_trophic_richness, mean_trophic_diversity)
 
 glimpse(model_dt_1)
 
