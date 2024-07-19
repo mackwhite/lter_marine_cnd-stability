@@ -266,16 +266,14 @@ species_presence <- dat_ready_4 |>
       group_by(program, year, month, site, subsite_level1, subsite_level2, subsite_level3, scientific_name) |> #remove habitat, because different than what it came in as - dont need it here
       mutate(total_bm_m = sum(dmperind_g_ind*density_num_m, na.rm = TRUE),
              total_bm_m2 = sum(dmperind_g_ind*density_num_m2, na.rm = TRUE),
-             total_bm_m3 = sum(dmperind_g_ind*density_num_m3, na.rm = TRUE),
-             total_biomass = sum(total_bm_m + total_bm_m2 + total_bm_m3, na.rm = TRUE),
+             total_biomass = sum(total_bm_m + total_bm_m2, na.rm = TRUE),
              total_density_m = sum(density_num_m, na.rm = TRUE),
              total_density_m2 = sum(density_num_m2, na.rm = TRUE),
-             total_density_m3 = sum(density_num_m3, na.rm = TRUE),
-             total_density = sum(total_density_m + total_density_m2 + total_density_m3, na.rm = TRUE)) |> 
+             total_density = sum(total_density_m + total_density_m2, na.rm = TRUE)) |> 
       ungroup() |>
       dplyr::select(
-            -total_bm_m, -total_bm_m2, -total_bm_m3,
-            -total_density_m, -total_density_m2, -total_density_m3, -site) |> 
+            -total_bm_m, -total_bm_m2,
+            -total_density_m, -total_density_m2, -site) |> 
       rename(site = site_CORRECT) |> 
       # arrange(program, habitat, year, month, site, subsite_level1, subsite_level2, subsite_level3, scientific_name) |> 
       group_by(program, habitat, year, site, scientific_name) |> 
@@ -320,4 +318,4 @@ for (i in 1:length(psh_vec)){
 df_temp_final <- df_temp |> 
       separate(col = psh_vec, into = c("program", "habitat", "site"), sep = ":")
 
-# write_csv(df_temp_final, "local_data/turnover_synchrony_07162024.csv")
+# write_csv(df_temp_final, "local_data/turnover_synchrony_07192024.csv")

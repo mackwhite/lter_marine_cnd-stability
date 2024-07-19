@@ -90,26 +90,34 @@ dt_mutate <- dt_og |>
   ### classify each individual as either being a vertebrate or invertebrate
   mutate(vert_1 = if_else(phylum == "Chordata", "vertebrate", "invertebrate")) |> 
   mutate(vert2 = if_else(is.na(vert_1) & project == "CoastalCA", "vertebrate", vert_1)) |> 
-  mutate(vert = ifelse(is.na(vert2), "invertebrate", vert2)) |> 
+  mutate(vert = if_else(is.na(vert2), "invertebrate", vert2)) |> 
   mutate(vertebrate_n = if_else(vert == "vertebrate" & dmperind_g_ind != 0, 1, 0),
          invertebrate_n = if_else(vert == "invertebrate" & dmperind_g_ind != 0, 1, 0)) |> 
   ### filtering out invertebrates - first manuscript focused on vertebrates (ie fishes)
   filter(vert == "vertebrate",
          ### removing invertebrate dominant projects, plus PIE given conversations with DB, NL, AS
          !project %in% c("NGA", "CCE", "PIE")) |> 
-  ### removing some of the unnecessary rows      
+  ### removing some of the unnecessary columns      
   select(-vert, -vert_1, -vert2, -vertebrate_n, -invertebrate_n, -raw_filename, -row_num)
 
 ###########################################################################
 ### calculate max size of community at this resolution so we can calculate 
 ### mean max size of species within community
 
-dt_mutate_1 <- dt_mutate |>   
-  group_by(project, habitat, year, month, site, subsite_level1, 
-           subsite_level2, subsite_level3, scientific_name) |>
-  mutate(max_size = max(dmperind_g_ind, na.rm = TRUE),
-         min_size = min(dmperind_g_ind, na.rm = TRUE),
-         mean_size = mean(dmperind_g_ind, na.rm = TRUE))
+### intitial code
+# dt_mutate_1 <- dt_mutate |>   
+#   group_by(project, habitat, year, month, site, subsite_level1, 
+#            subsite_level2, subsite_level3, scientific_name) |>
+#   mutate(max_size = max(dmperind_g_ind, na.rm = TRUE),
+#          min_size = min(dmperind_g_ind, na.rm = TRUE),
+#          mean_size = mean(dmperind_g_ind, na.rm = TRUE))
+
+### coding with AC on 7/19/2024
+dt_mutate_1 <- dt_mutate |> 
+      group_by(project, habitat, year, month, site, subsite_level1,
+               subsite_level2, subsite_level3, scientific_name) |>
+      mutate(max_size = case_when(dmperind_g_ind != 0 ~ max(dmperind_g_ind),
+      T ~ NA))
 
 ##########################################################################
 
@@ -118,32 +126,49 @@ dt_mutate_1 <- dt_mutate |>
 ### transect or bout) - LK updates at June meeting allow appropriate
 ### resolution for PISCO datasets
 
+### check for NAs
+na_count_per_column <- sapply(dt_mutate_1, function(x) sum(is.na(x)))
+print(na_count_per_column) #yay
+
+### checking to make sure syntax below was correct with AC on 7/19/24
+# test <- dt_total |> 
+#       filter(project == "FCE",
+#              year == 2020,
+#              month == 1,
+#              site == "RB",
+#              subsite_level1 == 10,
+#              subsite_level2 == 1,
+#              dmperind_g_ind > 0) |> 
+#       select(scientific_name, nind_ug_hr, density_num_m, total_nitrogen, total_nitrogen_m) |> 
+#       mutate(test = nind_ug_hr*density_num_m)
+
 dt_total <- dt_mutate_1 |> 
   group_by(project, habitat, year, month, site, subsite_level1, subsite_level2, subsite_level3) |> 
-  summarise(### calculate total phosphorus supply at each sampling unit and then sum to get column with all totals
+  summarize(
+    ### calculate total nitrogen supply at each sampling unit and then sum to get column with all totals
     total_nitrogen_m = sum(nind_ug_hr * density_num_m, na.rm = TRUE),
     total_nitrogen_m2 = sum(nind_ug_hr * density_num_m2, na.rm = TRUE),
-    total_nitrogen_m3 = sum(nind_ug_hr * density_num_m3, na.rm = TRUE),
+    # total_nitrogen_m3 = sum(nind_ug_hr * density_num_m3, na.rm = TRUE),
     ### create column with total_nitrogen contribution for each program, regardless of units
-    total_nitrogen = sum(total_nitrogen_m + total_nitrogen_m2 + total_nitrogen_m3, na.rm = TRUE),
+    total_nitrogen = sum(total_nitrogen_m + total_nitrogen_m2, na.rm = TRUE),
     ### calculate total phosphorus supply at each sampling unit and then sum to get column with all totals
     total_phosphorus_m = sum(pind_ug_hr * density_num_m, na.rm = TRUE),
     total_phosphorus_m2 = sum(pind_ug_hr * density_num_m2, na.rm = TRUE),
-    total_phosphorus_m3 = sum(pind_ug_hr * density_num_m3, na.rm = TRUE),
+    # total_phosphorus_m3 = sum(pind_ug_hr * density_num_m3, na.rm = TRUE),
     ### create column with total_phosphorus contribution for each program, regardless of units
-    total_phosphorus = sum(total_phosphorus_m + total_phosphorus_m2 + total_phosphorus_m3, na.rm = TRUE),
+    total_phosphorus = sum(total_phosphorus_m + total_phosphorus_m2, na.rm = TRUE),
     ### calculate total biomass at each sampling unit and then sum to get column with all totals
     total_bm_m = sum(dmperind_g_ind*density_num_m, na.rm = TRUE),
     total_bm_m2 = sum(dmperind_g_ind*density_num_m2, na.rm = TRUE),
-    total_bm_m3 = sum(dmperind_g_ind*density_num_m3, na.rm = TRUE),
+    # total_bm_m3 = sum(dmperind_g_ind*density_num_m3, na.rm = TRUE),
     ### create column with total_biomass for each program, regardless of units
-    total_biomass = sum(total_bm_m + total_bm_m2 + total_bm_m3, na.rm = TRUE),
+    total_biomass = sum(total_bm_m + total_bm_m2, na.rm = TRUE),
     # ### calculate species richness
     n_spp = n_distinct(scientific_name[dmperind_g_ind != 0]),
     ### calculate average community size metrics
     max_size = mean(max_size, na.rm = TRUE),
-    mean_size = mean(mean_size, na.rm = TRUE),
-    min_size = mean(min_size, na.rm = TRUE),
+    # mean_size = mean(mean_size, na.rm = TRUE),
+    # min_size = mean(min_size, na.rm = TRUE),
     ### calculate diversity indices of interest
     Species_Richness = length(unique(scientific_name[dmperind_g_ind != 0])),
     # Species_Shannon_Diversity_Index = diversity(x = table(scientific_name), index = "shannon"),
@@ -152,9 +177,9 @@ dt_total <- dt_mutate_1 |>
     # Trophic_Shannon_Diversity_Index = diversity(x = table(diet_cat), index = "shannon"),
     Trophic_Inverse_Simpson_Diversity_Index = diversity(x = table(diet_cat[dmperind_g_ind != 0]), index = "invsimpson")) |> 
   ungroup() |>
-  dplyr::select(-total_nitrogen_m, -total_nitrogen_m2, -total_nitrogen_m3,
-                -total_phosphorus_m, -total_phosphorus_m2, -total_phosphorus_m3,
-                -total_bm_m, -total_bm_m2, -total_bm_m3) |> 
+  dplyr::select(-total_nitrogen_m, -total_nitrogen_m2,
+                -total_phosphorus_m, -total_phosphorus_m2,
+                -total_bm_m, -total_bm_m2, -n_spp) |>
   arrange(project, habitat, year, month, site, subsite_level1, subsite_level2, subsite_level3)
   
 ### check for NAs
@@ -166,11 +191,14 @@ dt_total_clean <- dt_total |>
       mutate(Species_Inverse_Simpson_Diversity_Index = ifelse(Species_Richness == 0, 0, 
                                                               Species_Inverse_Simpson_Diversity_Index),
              Trophic_Inverse_Simpson_Diversity_Index = ifelse(Species_Richness == 0, 0, 
-                                                              Trophic_Inverse_Simpson_Diversity_Index)) |> 
+                                                              Trophic_Inverse_Simpson_Diversity_Index),
+             max_size = if_else(Species_Richness == 0, 0, 
+                                max_size)) |> 
       rename(species_richness = Species_Richness,
              species_diversity = Species_Inverse_Simpson_Diversity_Index, 
              trophic_diversity = Trophic_Inverse_Simpson_Diversity_Index,
              trophic_richness = Trophic_Richness)
+glimpse(dt_total_clean)
 
 ###########################################################################
 # add strata of interest to each project ----------------------------------
@@ -199,6 +227,7 @@ dt_total_strata <- left_join(dt_total_clean,
 ### Check NAs
 na_count_per_column <- sapply(dt_total_strata, function(x) sum(is.na(x)))
 print(na_count_per_column) #yayay
+glimpse(dt_total_strata)
 
 ###########################################################################
 # set up individual projects/habitats for analyses and plotting -----------
@@ -318,7 +347,7 @@ unique(dat_ready_2$habitat)
 dat_ready_3 <- dat_ready_2 |> 
   filter(!site %in% c("TB-5", "RB-17", "RB-19") ) |> 
   select(-strata, -subsite_level1, -subsite_level2, -subsite_level3, 
-         -n_spp, -mean_size, -min_size, -group, -units)
+         -group, -units)
 
 glimpse(dat_ready_3)
 unique(dat_ready_3$site)
@@ -368,9 +397,11 @@ model_dt_1 <- model_dt |>
 
 glimpse(model_dt_1)
 
-# write_csv(model_dt_1, "local_data/cnd_mdl_data_07162024.csv")
+# write_csv(model_dt_1, "local_data/cnd_mdl_data_07192024.csv")
 
-# model_dt_1 |> 
+### look into Sys.Date() function for automatically updating data in files that I read out
+
+# model_dt_1 |>
 #       ggplot(aes(n_stability, p_stability))+
 #       geom_point()+
 #       geom_abline()

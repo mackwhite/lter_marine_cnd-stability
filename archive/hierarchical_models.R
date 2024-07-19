@@ -12,7 +12,7 @@
 ### install.packages("librarian")
 librarian::shelf(tidyverse, readxl, glmmTMB, MuMIn, sjPlot, lme4, corrplot, performance, ggeffects, ggpubr, parameters)
 
-dat <- read_csv("local_data/final_model_data_07162024.csv")
+dat <- read_csv("local_data/final_model_data_07192024.csv")
 
 model_data_scaled <- dat |> 
   group_by(program) |> 
@@ -28,7 +28,7 @@ model_data_scaled <- dat |>
 # Species Richness Plots --------------------------------------------------
 
 rich_scaled <- model_data_scaled |> 
-  ggplot(aes(x = mean_spp_rich, y = n_stability_scaled, color = program)) +
+  ggplot(aes(x = mean_species_richness, y = n_stability_scaled, color = program)) +
   geom_point() +  # Adds the scatter plot points
   geom_smooth(method = "lm", se = FALSE) +  # Adds linear model lines for each program
   labs(x = "Scaled Species Richness",
@@ -38,7 +38,7 @@ rich_scaled <- model_data_scaled |>
         axis.text.y = element_text(face = "bold", color = "black"),
         axis.title.x = element_text(face = "bold", color = "black"),
         axis.title.y = element_text(face = "bold", color = "black"),
-        legend.position = "none",
+        legend.position = "bottom",
         legend.text = element_text(face = "bold", color = "black"),
         legend.title = element_text(face = "bold", color = "black"))
 
@@ -69,7 +69,7 @@ trophic_div_scaled <- model_data_scaled |>
       ggplot(aes(x = mean_trophic_diversity, y = n_stability_scaled, color = Program)) +
       geom_point() +  # Adds the scatter plot points
       geom_smooth(method = "lm", se = FALSE) +  # Adds linear model lines for each program
-      labs(x = "Scaled Species Diversity (Inverse Simpson)",
+      labs(x = "Scaled Trophic Diversity (Inverse Simpson)",
            y = "Scaled Aggregate Nitrogen Supply Stability (1/CV)") +
       theme_classic() +
       theme(axis.text.x = element_text(face = "bold", color = "black"),
@@ -85,8 +85,8 @@ ggarrange(rich_scaled, div_scaled, trophic_div_scaled,
           labels = c('a)','b)', 'c)'),
           ncol = 3, nrow = 1, align = "h")
 
-ggsave("output/ms first round/plots/two-panel-dsr-meeting_UPDATED07162024.tiff", units = "in", width = 10,
-       height = 6, dpi =  600, compression = "lzw")
+# ggsave("output/ms first round/plots/two-panel-dsr-meeting_UPDATED07192024.tiff", units = "in", width = 10,
+#        height = 6, dpi =  600, compression = "lzw")
 
 # ggsave("output/ms first round/plots/two-panel-dsr-meeting-legend.tiff", units = "in", width = 10,
 #        height = 6, dpi =  600, compression = "lzw")
