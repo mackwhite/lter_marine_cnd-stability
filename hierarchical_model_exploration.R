@@ -21,6 +21,13 @@ model_data_scaled <- dat |>
   ungroup() |>
   mutate(n_stability_scaled = scale(n_stability))
 
+model_data_scaledv2 <- dat |> 
+      group_by(program, habitat) |> 
+      ## this is a function syntax
+      mutate(across(mean_max_ss:synch,\(x) scale(x, center = TRUE))) |>
+      ungroup() |>
+      mutate(n_stability_scaled = scale(n_stability))
+
 ###########################################################################
 # diversity-stability plots at program ------------------------------------
 ###########################################################################
@@ -42,6 +49,20 @@ rich_scaled <- model_data_scaled |>
         legend.text = element_text(face = "bold", color = "black"),
         legend.title = element_text(face = "bold", color = "black"))
 
+rich_scaledv2 <- model_data_scaledv2 |> 
+      ggplot(aes(x = mean_species_richness, y = n_stability_scaled, color = program)) +
+      geom_point() +  # Adds the scatter plot points
+      geom_smooth(method = "lm", se = FALSE) +  # Adds linear model lines for each program
+      labs(x = "Scaled Species Richness",
+           y = "Scaled Aggregate Nitrogen Supply Stability (1/CV)") +
+      theme_classic() +
+      theme(axis.text.x = element_text(face = "bold", color = "black"),
+            axis.text.y = element_text(face = "bold", color = "black"),
+            axis.title.x = element_text(face = "bold", color = "black"),
+            axis.title.y = element_text(face = "bold", color = "black"),
+            legend.position = "bottom",
+            legend.text = element_text(face = "bold", color = "black"),
+            legend.title = element_text(face = "bold", color = "black"))
 
 # Species Evenness Plots --------------------------------------------------
 
@@ -61,6 +82,23 @@ div_scaled <- model_data_scaled |>
         legend.background = element_rect(color = "black"),
         legend.text = element_text(face = "bold", color = "black"),
         legend.title = element_text(face = "bold", color = "black"))
+
+div_scaledv2 <- model_data_scaledv2 |> 
+      rename(Program = program) |> 
+      ggplot(aes(x = mean_species_diversity, y = n_stability_scaled, color = Program)) +
+      geom_point() +  # Adds the scatter plot points
+      geom_smooth(method = "lm", se = FALSE) +  # Adds linear model lines for each program
+      labs(x = "Scaled Species Diversity (Inverse Simpson)",
+           y = "Scaled Aggregate Nitrogen Supply Stability (1/CV)") +
+      theme_classic() +
+      theme(axis.text.x = element_text(face = "bold", color = "black"),
+            axis.text.y = element_text(face = "bold", color = "black"),
+            axis.title.x = element_text(face = "bold", color = "black"),
+            axis.title.y = element_blank(),
+            legend.position = "none",
+            legend.background = element_rect(color = "black"),
+            legend.text = element_text(face = "bold", color = "black"),
+            legend.title = element_text(face = "bold", color = "black"))
 
 # Trophic Diversity Plots --------------------------------------------------
 
