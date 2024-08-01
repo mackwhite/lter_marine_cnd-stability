@@ -128,7 +128,32 @@ ggarrange(rich_scaled, div_scaled, trophic_div_scaled,
 
 # ggsave("output/ms first round/plots/two-panel-dsr-meeting-legend.tiff", units = "in", width = 10,
 #        height = 6, dpi =  600, compression = "lzw")
+
+###########################################################################
+# beta/synch-stability plots at program ------------------------------------
+###########################################################################
+synch_scaled <- model_data_scaled |> 
+      rename(Program = program) |> 
+      ggplot(aes(x = synch, y = n_stability_scaled, color = Program)) +
+      geom_point() +  # Adds the scatter plot points
+      geom_smooth(method = "lm", se = FALSE) +  # Adds linear model lines for each program
+      labs(x = "Scaled Species Synchrony",
+           y = "Scaled Aggregate Nitrogen Supply Stability (1/CV)") +
+      theme_classic() +
+      theme(axis.text.x = element_text(face = "bold", color = "black"),
+            axis.text.y = element_text(face = "bold", color = "black"),
+            axis.title.x = element_text(face = "bold", color = "black"),
+            axis.title.y = element_blank(),
+            legend.position = "bottom",
+            legend.background = element_rect(color = "black"),
+            legend.text = element_text(face = "bold", color = "black"),
+            legend.title = element_text(face = "bold", color = "black"))
+
+
+
+###########################################################################
 # hierarchical models -----------------------------------------------------
+###########################################################################
 
 m1 <- glmmTMB(n_stability_scaled ~ mean_spp_rich + (mean_spp_rich|program), data = model_data_scaled,
               # family = gaussian(link = "log"),
@@ -194,10 +219,10 @@ global_model_N <- glmmTMB(
     # ecosystem +
     # latitude +
     mean_max_ss +
-    mean_spp_rich + 
+    mean_species_richness + 
     mean_species_diversity +
     mean_trophic_diversity + 
-    # beta_time + synch + 
+    beta_time + synch +
    (1|program),
   data = model_data_scaled,
   na.action = "na.fail",
@@ -210,7 +235,7 @@ performance::check_model(global_model_N)
 
 model_set_N <- dredge(global_model_N,
                       # subset = !(`cond(beta_time)`&&`cond(synch)`)
-                      subset = !(`cond(mean_spp_rich)`&&`cond(mean_species_diversity)`)
+                      subset = !(`cond(mean_species_richness)`&&`cond(mean_species_diversity)`)
                       ) |>
   filter(delta < 4)
 
@@ -222,7 +247,7 @@ m1 <- glmmTMB(n_stability_scaled ~ mean_max_ss + (1|program), data = model_data_
                                        optArgs = list(method = 'CG')),
               REML = FALSE)
 
-m2 <- glmmTMB(n_stability_scaled ~ mean_spp_rich + (1|program), data = model_data_scaled,
+m2 <- glmmTMB(n_stability_scaled ~ mean_species_richness + (1|program), data = model_data_scaled,
               # family = gaussian(link = "log"),
               control = glmmTMBControl(optimizer=optim,
                                        optArgs = list(method = 'CG')),
@@ -265,7 +290,7 @@ m12 <- glmmTMB(n_stability_scaled ~ mean_max_ss + synch + (1|program), data = mo
                                        optArgs = list(method = 'CG')),
               REML = FALSE)
 
-m22 <- glmmTMB(n_stability_scaled ~ mean_spp_rich + synch + (1|program), data = model_data_scaled,
+m22 <- glmmTMB(n_stability_scaled ~ mean_species_richness + synch + (1|program), data = model_data_scaled,
               # family = gaussian(link = "log"),
               control = glmmTMBControl(optimizer=optim,
                                        optArgs = list(method = 'CG')),
@@ -308,7 +333,7 @@ m13 <- glmmTMB(n_stability_scaled ~ mean_max_ss + beta_time + synch + (1|program
                                        optArgs = list(method = 'CG')),
               REML = FALSE)
 
-m23 <- glmmTMB(n_stability_scaled ~ mean_spp_rich + beta_time + synch + (1|program), data = model_data_scaled,
+m23 <- glmmTMB(n_stability_scaled ~ mean_species_richness + beta_time + synch + (1|program), data = model_data_scaled,
               # family = gaussian(link = "log"),
               control = glmmTMBControl(optimizer=optim,
                                        optArgs = list(method = 'CG')),
