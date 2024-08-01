@@ -12,7 +12,7 @@
 ### install.packages("librarian")
 librarian::shelf(tidyverse, readxl, glmmTMB, MuMIn, sjPlot, lme4, corrplot, performance, ggeffects, ggpubr, parameters)
 
-dat <- read_csv("local_data/final_model_data_07192024.csv")
+dat <- read_csv("local_data/final_model_data_08012024.csv")
 
 model_data_scaled <- dat |> 
   group_by(program) |> 
@@ -149,13 +149,28 @@ synch_scaled <- model_data_scaled |>
             legend.text = element_text(face = "bold", color = "black"),
             legend.title = element_text(face = "bold", color = "black"))
 
-
+turnover_scaled <- model_data_scaled |> 
+      rename(Program = program) |> 
+      ggplot(aes(x = beta_time, y = n_stability_scaled, color = Program)) +
+      geom_point() +  # Adds the scatter plot points
+      geom_smooth(method = "lm", se = FALSE) +  # Adds linear model lines for each program
+      labs(x = "Scaled Species Turnover",
+           y = "Scaled Aggregate Nitrogen Supply Stability (1/CV)") +
+      theme_classic() +
+      theme(axis.text.x = element_text(face = "bold", color = "black"),
+            axis.text.y = element_text(face = "bold", color = "black"),
+            axis.title.x = element_text(face = "bold", color = "black"),
+            axis.title.y = element_blank(),
+            legend.position = "bottom",
+            legend.background = element_rect(color = "black"),
+            legend.text = element_text(face = "bold", color = "black"),
+            legend.title = element_text(face = "bold", color = "black"))
 
 ###########################################################################
 # hierarchical models -----------------------------------------------------
 ###########################################################################
 
-m1 <- glmmTMB(n_stability_scaled ~ mean_spp_rich + (mean_spp_rich|program), data = model_data_scaled,
+m1 <- glmmTMB(n_stability_scaled ~ mean_species_richne + (mean_spp_rich|program), data = model_data_scaled,
               # family = gaussian(link = "log"),
               control = glmmTMBControl(optimizer=optim,
                                        optArgs = list(method = 'CG')),

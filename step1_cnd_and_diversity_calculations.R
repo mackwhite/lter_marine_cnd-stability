@@ -8,7 +8,7 @@
 
 ### load necessary libraries
 # install.packages("librarian")
-librarian::shelf(tidyverse, googledrive, vegan, readxl, e1071)
+librarian::shelf(tidyverse, googledrive, vegan, readxl, e1071, dplyr, splitstackshape)
 
 ### set google drive paths
 exc_ids <- googledrive::drive_ls(googledrive::as_id("https://drive.google.com/drive/u/0/folders/1VakpcnFVckAYNggv_zNyfDRfkcGTjZxX")) |> 
@@ -112,8 +112,68 @@ dt_mutate <- dt_og |>
 #          min_size = min(dmperind_g_ind, na.rm = TRUE),
 #          mean_size = mean(dmperind_g_ind, na.rm = TRUE))
 
+###########################################################################
+# fixing sbc/pisco data prior to calculations ----------[08/01/2024]-------
+###########################################################################
+# mcr_test <- dt_mutate_1 |> 
+#       filter(project == "MCR")
+# glimpse(mcr_test)
+# sbc_test <- dt_mutate_1 |> 
+#       filter(project == "SBC")
+# glimpse(sbc_test)
+# fce_test <- dt_mutate_1 |> 
+#       filter(project == "FCE")
+# pisco_test <- dt_mutate_1 |> 
+#       filter(project == "CoastalCA")
+# glimpse(fce_test)
+# sbc_test_test <- sbc_test |> 
+#       group_by(year, month, site, subsite_level1) |> 
+#       summarize(species = n_distinct(scientific_name),
+#                 n = n())
+# mcr_test_test <- mcr_test |>
+#       group_by(year, month, site, subsite_level1, subsite_level2, subsite_level3) |>
+#       summarize(species = n_distinct(scientific_name),
+#                 n = n())
+# fce_test_test <- fce_test |>
+#       group_by(year, month, site, subsite_level1, subsite_level2) |>
+#       summarize(species = n_distinct(scientific_name),
+#                 n = n())
+# pisco_test_test <- pisco_test |> 
+#       filter(project == "CoastalCA") |> 
+#              group_by(year, month, site, subsite_level1, subsite_level2, subsite_level3) |>
+#              summarize(species = n_distinct(scientific_name),
+#                        n = n())
+# dt_mutate_0_test <- dt_mutate |> filter(project == "FCE") |> filter(year == 2017) |> filter(month == 4) |>
+#       filter(site == "RB") |> filter(subsite_level1 == "10") |> filter(subsite_level2 == "1")
+
+### pull out all data such that we can join with pisco and sbc later
+dt_mutate_0_no_sbc_pisco <- dt_mutate |> filter(!project %in% c("CoastalCA", "SBC"))
+
+### determine the # of individuals caught at each transect
+dt_mutate_0_pisco <- dt_mutate |> filter(project == "CoastalCA") |> mutate(count = density_num_m2*60)
+### filter where count is greater than zero [keep for now so you can check] and duplicate by count to make each row an individual
+dt_mutate_0_pisco_1 <- dt_mutate_0_pisco |> filter(count > 0) |> expandRows(count = "count", drop = FALSE) |> 
+      ### account for the step above by dividing density by count so we aren't artificially inflating the density and thus nsupply below
+      mutate(density_num_m2 = density_num_m2/count)
+### bind zero-data with longer, individual-per-row data
+dt_mutate_0_pisco_clean <- bind_rows(dt_mutate_0_pisco |> filter(count == 0), dt_mutate_0_pisco_1) |> 
+      select(-count)
+
+### determine the # of individuals caught at each transect
+dt_mutate_0_sbc <- dt_mutate |> filter(project == "SBC") |> mutate(count = density_num_m2*40)
+### filter where count is greater than zero [keep for now so you can check] and duplicate by count to make each row an individual
+dt_mutate_0_sbc_1 <- dt_mutate_0_sbc |> filter(count > 0) |> expandRows(count = "count", drop = FALSE) |> 
+      ### account for the step above by dividing density by count so we aren't artificially inflating the density and thus nsupply below
+      mutate(density_num_m2 = density_num_m2/count)
+### bind zero-data with longer, individual-per-row data
+dt_mutate_0_sbc_clean <- bind_rows(dt_mutate_0_sbc |> filter(count == 0), dt_mutate_0_sbc_1) |> 
+      select(-count)
+
+### join all of the datasets back together with a simple rbind
+dt_mutate_05 <- rbind(dt_mutate_0_no_sbc_pisco, dt_mutate_0_pisco_clean, dt_mutate_0_sbc_clean)
+
 ### coding with AC on 7/19/2024
-dt_mutate_1 <- dt_mutate |> 
+dt_mutate_1 <- dt_mutate_05 |> 
       group_by(project, habitat, year, month, site, subsite_level1,
                subsite_level2, subsite_level3, scientific_name) |>
       mutate(max_size = case_when(dmperind_g_ind != 0 ~ max(dmperind_g_ind),
@@ -223,7 +283,6 @@ dt_total_strata <- left_join(dt_total_clean,
   select(project, habitat, projecthabitat, strata, year, month, site, subsite_level1, 
           subsite_level2, subsite_level3, everything())
       
-
 ### Check NAs
 na_count_per_column <- sapply(dt_total_strata, function(x) sum(is.na(x)))
 print(na_count_per_column) #yayay
@@ -397,7 +456,7 @@ model_dt_1 <- model_dt |>
 
 glimpse(model_dt_1)
 
-# write_csv(model_dt_1, "local_data/cnd_mdl_data_07192024.csv")
+# write_csv(model_dt_1, "local_data/cnd_mdl_data_08012024.csv")
 
 ### look into Sys.Date() function for automatically updating data in files that I read out
 

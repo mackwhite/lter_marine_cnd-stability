@@ -101,6 +101,36 @@ dt_mutate <- dt_og |>
       select(-vert, -vert_1, -vert2, -vertebrate_n, -invertebrate_n, -raw_filename, -row_num)
 
 ###########################################################################
+# fixing sbc/pisco data prior to calculations ----------[08/01/2024]-------
+###########################################################################
+
+### pull out all data such that we can join with pisco and sbc later
+dt_mutate_0_no_sbc_pisco <- dt_mutate |> filter(!project %in% c("CoastalCA", "SBC"))
+
+### determine the # of individuals caught at each transect
+dt_mutate_0_pisco <- dt_mutate |> filter(project == "CoastalCA") |> mutate(count = density_num_m2*60)
+### filter where count is greater than zero [keep for now so you can check] and duplicate by count to make each row an individual
+dt_mutate_0_pisco_1 <- dt_mutate_0_pisco |> filter(count > 0) |> expandRows(count = "count", drop = FALSE) |> 
+      ### account for the step above by dividing density by count so we aren't artificially inflating the density and thus nsupply below
+      mutate(density_num_m2 = density_num_m2/count)
+### bind zero-data with longer, individual-per-row data
+dt_mutate_0_pisco_clean <- bind_rows(dt_mutate_0_pisco |> filter(count == 0), dt_mutate_0_pisco_1) |> 
+      select(-count)
+
+### determine the # of individuals caught at each transect
+dt_mutate_0_sbc <- dt_mutate |> filter(project == "SBC") |> mutate(count = density_num_m2*40)
+### filter where count is greater than zero [keep for now so you can check] and duplicate by count to make each row an individual
+dt_mutate_0_sbc_1 <- dt_mutate_0_sbc |> filter(count > 0) |> expandRows(count = "count", drop = FALSE) |> 
+      ### account for the step above by dividing density by count so we aren't artificially inflating the density and thus nsupply below
+      mutate(density_num_m2 = density_num_m2/count)
+### bind zero-data with longer, individual-per-row data
+dt_mutate_0_sbc_clean <- bind_rows(dt_mutate_0_sbc |> filter(count == 0), dt_mutate_0_sbc_1) |> 
+      select(-count)
+
+### join all of the datasets back together with a simple rbind
+dt_mutate_05 <- rbind(dt_mutate_0_no_sbc_pisco, dt_mutate_0_pisco_clean, dt_mutate_0_sbc_clean)
+
+###########################################################################
 # add strata of interest to each project ----------------------------------
 ###########################################################################
 
@@ -114,7 +144,7 @@ strata_list1 <- strata_list %>%
       distinct()
 
 ### join together the datasets of nutrient supply and biomass with strata
-dt_total_strata <- left_join(dt_mutate, 
+dt_total_strata <- left_join(dt_mutate_05, 
                              strata_list1, 
                              by = c("project", "habitat", "site",
                                     "subsite_level1", "subsite_level2")) |> 
@@ -318,4 +348,4 @@ for (i in 1:length(psh_vec)){
 df_temp_final <- df_temp |> 
       separate(col = psh_vec, into = c("program", "habitat", "site"), sep = ":")
 
-# write_csv(df_temp_final, "local_data/turnover_synchrony_07192024.csv")
+# write_csv(df_temp_final, "local_data/turnover_synchrony_08012024.csv")
