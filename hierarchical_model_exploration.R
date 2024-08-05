@@ -171,7 +171,7 @@ turnover_scaled <- model_data_scaled |>
 ###########################################################################
 
 m1 <- glmmTMB(n_stability_scaled ~ mean_species_richne + (mean_spp_rich|program), data = model_data_scaled,
-              # family = gaussian(link = "log"),
+              family = gaussian(link = "log"),
               control = glmmTMBControl(optimizer=optim,
                                        optArgs = list(method = 'CG')),
               REML = FALSE)
