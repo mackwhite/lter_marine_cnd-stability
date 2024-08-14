@@ -2,16 +2,11 @@
 ### install.packages("librarian")
 librarian::shelf(tidyverse, readxl, glmmTMB, MuMIn, corrplot, performance, ggeffects, sjlabelled)
 
-exc <- read_csv("local_data/model_data_all_final_07032024.csv") #all sites, no 10 year cutoff
-
-# dt <- exc |> 
-#   filter(site != "RB-17",
-#          program != "PIE")
-
-
+exc <- read_csv("local_data/cnd_diversity_model_data_long_08142024.csv") #all sites, no 10 year cutoff
 
 ### summarize all sites measured within the dataset annualy
 plot_dt <- exc |> 
+      filter(total_nitrogen <= 1000000) |> 
   ### https://nga.lternet.edu/wp-content/uploads/2022/06/SKQ202210S_CruisePlan.pdf
   ### kodiak island and middleton data is terrible, so remove
   ### link at top indicates KIP is part of PWS sampling program, so join

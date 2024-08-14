@@ -246,7 +246,7 @@ dt_total <- dt_mutate_1 |>
 na_count_per_column <- sapply(dt_total, function(x) sum(is.na(x)))
 print(na_count_per_column) #yay
 
-### cleaning up infinite diversity metric values at sites where no fish were caught
+### cleaning up infinite diversity metric values for instances where no fish were caught
 dt_total_clean <- dt_total |> 
       mutate(Species_Inverse_Simpson_Diversity_Index = ifelse(Species_Richness == 0, 0, 
                                                               Species_Inverse_Simpson_Diversity_Index),
@@ -410,6 +410,7 @@ dat_ready_3 <- dat_ready_2 |>
 
 glimpse(dat_ready_3)
 unique(dat_ready_3$site)
+summary(dat_ready_3)
 
 ### summarize all sites measured within the dataset annualy, then across period of record
 model_dt <- dat_ready_3 |> 
@@ -457,6 +458,7 @@ model_dt_1 <- model_dt |>
 glimpse(model_dt_1)
 
 # write_csv(model_dt_1, "local_data/cnd_mdl_data_08012024.csv")
+# write_csv(dat_ready_3, "local_data/cnd_diversity_model_data_long_08142024.csv")
 
 ### look into Sys.Date() function for automatically updating data in files that I read out
 

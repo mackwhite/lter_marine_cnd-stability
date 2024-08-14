@@ -21,12 +21,12 @@ model_data_scaled <- dat |>
   ungroup() |>
   mutate(n_stability_scaled = scale(n_stability))
 
-model_data_scaledv2 <- dat |> 
-      group_by(program, habitat) |> 
-      ## this is a function syntax
-      mutate(across(mean_max_ss:synch,\(x) scale(x, center = TRUE))) |>
-      ungroup() |>
-      mutate(n_stability_scaled = scale(n_stability))
+# model_data_scaledv2 <- dat |> 
+#       group_by(program, habitat) |> 
+#       ## this is a function syntax
+#       mutate(across(mean_max_ss:synch,\(x) scale(x, center = TRUE))) |>
+#       ungroup() |>
+#       mutate(n_stability_scaled = scale(n_stability))
 
 ###########################################################################
 # diversity-stability plots at program ------------------------------------
@@ -170,7 +170,7 @@ turnover_scaled <- model_data_scaled |>
 # hierarchical models -----------------------------------------------------
 ###########################################################################
 
-m1 <- glmmTMB(n_stability_scaled ~ mean_species_richne + (mean_spp_rich|program), data = model_data_scaled,
+m1 <- glmmTMB(n_stability_scaled ~ mean_species_richness + (mean_species_richness|program), data = model_data_scaled,
               family = gaussian(link = "log"),
               control = glmmTMBControl(optimizer=optim,
                                        optArgs = list(method = 'CG')),
@@ -237,7 +237,7 @@ global_model_N <- glmmTMB(
     mean_species_richness + 
     mean_species_diversity +
     mean_trophic_diversity + 
-    beta_time + synch +
+    # beta_time + synch +
    (1|program),
   data = model_data_scaled,
   na.action = "na.fail",
