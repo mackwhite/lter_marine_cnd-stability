@@ -260,6 +260,9 @@ dt_total_clean <- dt_total |>
              trophic_richness = Trophic_Richness)
 glimpse(dt_total_clean)
 
+### checking revised dataset
+dt_total_clean |> ggplot(aes(x = species_richness, y = species_diversity, color = project)) + geom_abline() + geom_point() + facet_wrap(~project)
+
 ###########################################################################
 # add strata of interest to each project ----------------------------------
 ###########################################################################
