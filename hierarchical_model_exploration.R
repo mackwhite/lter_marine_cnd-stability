@@ -21,8 +21,8 @@ model_data_scaled <- dat |>
   ungroup() |>
   mutate(n_stability_scaled = scale(n_stability))
 
-# model_data_scaledv2 <- dat |> 
-#       group_by(program, habitat) |> 
+# model_data_scaledv2 <- dat |>
+#       group_by(program, habitat) |>
 #       ## this is a function syntax
 #       mutate(across(mean_max_ss:synch,\(x) scale(x, center = TRUE))) |>
 #       ungroup() |>
@@ -37,7 +37,7 @@ model_data_scaled <- dat |>
 rich_scaled <- model_data_scaled |> 
   ggplot(aes(x = mean_species_richness, y = n_stability_scaled, color = program)) +
   geom_point() +  # Adds the scatter plot points
-  geom_smooth(method = "lm", se = FALSE) +  # Adds linear model lines for each program
+  geom_smooth(method = "lm", se = TRUE) +  # Adds linear model lines for each program
   labs(x = "Scaled Species Richness",
        y = "Scaled Aggregate Nitrogen Supply Stability (1/CV)") +
   theme_classic() +
@@ -78,7 +78,7 @@ div_scaled <- model_data_scaled |>
         axis.text.y = element_text(face = "bold", color = "black"),
         axis.title.x = element_text(face = "bold", color = "black"),
         axis.title.y = element_blank(),
-        legend.position = "none",
+        legend.position = "bottom",
         legend.background = element_rect(color = "black"),
         legend.text = element_text(face = "bold", color = "black"),
         legend.title = element_text(face = "bold", color = "black"))
@@ -95,7 +95,7 @@ div_scaledv2 <- model_data_scaledv2 |>
             axis.text.y = element_text(face = "bold", color = "black"),
             axis.title.x = element_text(face = "bold", color = "black"),
             axis.title.y = element_blank(),
-            legend.position = "none",
+            legend.position = "bottom",
             legend.background = element_rect(color = "black"),
             legend.text = element_text(face = "bold", color = "black"),
             legend.title = element_text(face = "bold", color = "black"))
@@ -153,7 +153,7 @@ turnover_scaled <- model_data_scaled |>
       rename(Program = program) |> 
       ggplot(aes(x = beta_time, y = n_stability_scaled, color = Program)) +
       geom_point() +  # Adds the scatter plot points
-      geom_smooth(method = "lm", se = FALSE) +  # Adds linear model lines for each program
+      geom_smooth(method = "lm", se = TRUE) +  # Adds linear model lines for each program
       labs(x = "Scaled Species Turnover",
            y = "Scaled Aggregate Nitrogen Supply Stability (1/CV)") +
       theme_classic() +
@@ -237,6 +237,7 @@ global_model_N <- glmmTMB(
     mean_species_richness + 
     mean_species_diversity +
     mean_trophic_diversity + 
+    mean_trophic_richness +        
     # beta_time + synch +
    (1|program),
   data = model_data_scaled,
@@ -248,9 +249,18 @@ global_model_N <- glmmTMB(
 diagnose(global_model_N)
 performance::check_model(global_model_N)
 
+### explore colinearity across covariates
+numeric_data <- model_data_scaled |> 
+      ### filter for only numeric data
+      select(mean_max_ss:mean_trophic_diversity)
+cor_matrix <- cor(numeric_data)
+corrplot(cor_matrix, method = "number")
+glimpse(numeric_data)
+
+
 model_set_N <- dredge(global_model_N,
-                      # subset = !(`cond(beta_time)`&&`cond(synch)`)
-                      subset = !(`cond(mean_species_richness)`&&`cond(mean_species_diversity)`)
+                      subset = !(`cond(mean_trophic_richness)`&&`cond(mean_species_richness)`)
+                      & !(`cond(mean_trophic_diversity)`&&`cond(mean_species_diversity)`)
                       ) |>
   filter(delta < 4)
 
