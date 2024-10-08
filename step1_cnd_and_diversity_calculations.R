@@ -178,7 +178,8 @@ dt_mutate_1 <- dt_mutate_05 |>
                subsite_level2, subsite_level3, scientific_name) |>
       mutate(max_size = case_when(dmperind_g_ind != 0 ~ max(dmperind_g_ind),
       T ~ NA))
-
+      # mutate(sd_size = case_when(dmperind_g_ind != 0 ~ sd(dmperind_g_ind),
+      #                             T ~ NA)) 
 ##########################################################################
 
 ##########################################################################
@@ -455,17 +456,22 @@ model_dt <- dat_ready_3 |>
       ungroup()
 
 model_dt_1 <- model_dt |> 
-      select(program, habitat, site, n_stability, p_stability, mean_max_ss, mean_species_richness, 
+      select(program, habitat, site, bm_stability, n_stability, p_stability, mean_max_ss, mean_species_richness, 
              mean_species_diversity, mean_trophic_richness, mean_trophic_diversity)
 
 glimpse(model_dt_1)
 
-# write_csv(model_dt_1, "local_data/cnd_mdl_data_08012024.csv")
+# write_csv(model_dt_1, "local_data/cnd_mdl_data_10_08_2024.csv")
 # write_csv(dat_ready_3, "local_data/cnd_diversity_model_data_long_08142024.csv")
 
 ### look into Sys.Date() function for automatically updating data in files that I read out
 
-# model_dt_1 |>
-#       ggplot(aes(n_stability, p_stability))+
-#       geom_point()+
-#       geom_abline()
+model_dt_1 |>
+      ggplot(aes(n_stability, p_stability))+
+      geom_point()+
+      geom_abline()
+
+model_dt_1 |>
+      ggplot(aes(bm_stability, n_stability))+
+      geom_point()+
+      geom_abline()
