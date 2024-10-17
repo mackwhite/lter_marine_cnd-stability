@@ -429,18 +429,21 @@ model_dt <- dat_ready_3 |>
                 trophic_diversity_ann = mean(trophic_diversity)) |> 
   ungroup() |> 
   group_by(program, habitat, site) |> 
-  summarize(mean_n = mean(total_nitrogen_ann),
-            cv_n = (sd(total_nitrogen_ann, na.rm = TRUE) / mean(total_nitrogen_ann, na.rm = TRUE)),
-            n_stability = 1/cv_n,
-            mean_p = mean(total_phosphorus_ann),
-            cv_p = (sd(total_phosphorus_ann, na.rm = TRUE) / mean(total_phosphorus_ann, na.rm = TRUE)),
-            p_stability = 1/cv_p,
-            mean_bm = mean(total_biomass_ann),
-            cv_bm = (sd(total_biomass_ann, na.rm = TRUE) / mean(total_biomass_ann, na.rm = TRUE)),
-            bm_stability = 1/cv_bm,
-            mean_max_ss = mean(max_size_ann),
-            cv_max_ss = (sd(max_size_ann, na.rm = TRUE) / mean(max_size_ann, na.rm = TRUE)),
-            max_size_stability = 1/cv_max_ss,
+  summarize(comm_mean_n = mean(total_nitrogen_ann),
+            comm_sd_n = sd(total_nitrogen_ann),
+            comm_cv_n = (sd(total_nitrogen_ann, na.rm = TRUE) / mean(total_nitrogen_ann, na.rm = TRUE)),
+            comm_n_stability = 1/comm_cv_n,
+            comm_mean_p = mean(total_phosphorus_ann),
+            comm_sd_p = sd(total_phosphorus_ann),
+            comm_cv_p = (sd(total_phosphorus_ann, na.rm = TRUE) / mean(total_phosphorus_ann, na.rm = TRUE)),
+            comm_p_stability = 1/comm_cv_p,
+            comm_mean_bm = mean(total_biomass_ann),
+            comm_sd_bm = sd(total_biomass_ann),
+            comm_cv_bm = (sd(total_biomass_ann, na.rm = TRUE) / mean(total_biomass_ann, na.rm = TRUE)),
+            comm_bm_stability = 1/comm_cv_bm,
+            comm_mean_max_ss = mean(max_size_ann),
+            comm_cv_max_ss = (sd(max_size_ann, na.rm = TRUE) / mean(max_size_ann, na.rm = TRUE)),
+            comm_max_size_stability = 1/comm_cv_max_ss,
             mean_species_richness = mean(species_richness_ann),
             cv_species_richness = (sd(species_richness_ann, na.rm = TRUE) / mean(species_richness_ann, na.rm = TRUE)),
             species_richness_stability = 1/cv_species_richness,
@@ -456,14 +459,18 @@ model_dt <- dat_ready_3 |>
       ungroup()
 
 model_dt_1 <- model_dt |> 
-      select(program, habitat, site, bm_stability, n_stability, p_stability, mean_max_ss, mean_species_richness, 
+      select(program, habitat, site, 
+             comm_mean_bm, comm_sd_bm, comm_bm_stability, 
+             comm_mean_n, comm_sd_n, comm_n_stability, 
+             comm_mean_p, comm_sd_p, comm_p_stability, 
+             comm_mean_max_ss, mean_species_richness, 
              mean_species_diversity, mean_trophic_richness, mean_trophic_diversity)
 
 glimpse(model_dt_1)
 
 # write_csv(model_dt_1, "local_data/cnd_mdl_data_10_08_2024.csv")
 # write_csv(dat_ready_3, "local_data/cnd_diversity_model_data_long_08142024.csv")
-
+# write_csv(model_dt_1, "local_data/community-level-nutrient-stability_10172024.csv")
 ### look into Sys.Date() function for automatically updating data in files that I read out
 
 model_dt_1 |>
