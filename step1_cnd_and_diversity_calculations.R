@@ -103,6 +103,7 @@ dt_mutate <- dt_og |>
 ###########################################################################
 ### calculate max size of community at this resolution so we can calculate 
 ### mean max size of species within community
+### changed with AC in July to below
 
 ### intitial code
 # dt_mutate_1 <- dt_mutate |>   
@@ -177,9 +178,8 @@ dt_mutate_1 <- dt_mutate_05 |>
       group_by(project, habitat, year, month, site, subsite_level1,
                subsite_level2, subsite_level3, scientific_name) |>
       mutate(max_size = case_when(dmperind_g_ind != 0 ~ max(dmperind_g_ind),
-      T ~ NA))
-      # mutate(sd_size = case_when(dmperind_g_ind != 0 ~ sd(dmperind_g_ind),
-      #                             T ~ NA)) 
+      T ~ NA)) |> 
+      ungroup()
 ##########################################################################
 
 ##########################################################################
