@@ -177,20 +177,14 @@ dt_mutate_05 <- rbind(dt_mutate_0_no_sbc_pisco, dt_mutate_0_pisco_clean, dt_muta
 rm(dt_mutate_0_no_sbc_pisco, dt_mutate_0_pisco, dt_mutate_0_pisco_1, dt_mutate_0_pisco_clean,
    dt_mutate_0_sbc, dt_mutate_0_sbc_1, dt_mutate_0_sbc_clean)
 
-# ### coding with AC on 7/19/2024 - don't need for this step
-# dt_mutate_1 <- dt_mutate_05 |> 
-#       group_by(project, habitat, year, month, site, subsite_level1,
-#                subsite_level2, subsite_level3, scientific_name) |>
-#       mutate(max_size = case_when(dmperind_g_ind != 0 ~ max(dmperind_g_ind),
-#                                   T ~ NA)) |> 
-#       ungroup()
-# 
-# dt_mutate_12 <- dt_mutate_1 |> 
-#       group_by(project, habitat, year, month, site, subsite_level1,
-#                subsite_level2, subsite_level3, scientific_name) |>
-#       mutate(var_size = case_when(dmperind_g_ind != 0 ~ sd(dmperind_g_ind),
-#                                   T ~ NA)) |> 
-#       ungroup()
+### coding with AC on 7/19/2024 - don't need for this
+dt_mutate_1 <- dt_mutate_05 |>
+      group_by(project, habitat, year, month, site, subsite_level1,
+               subsite_level2, subsite_level3, diet_cat, scientific_name) |>
+      mutate(max_size = case_when(dmperind_g_ind != 0 ~ max(dmperind_g_ind),
+                                  T ~ NA)) |>
+      ungroup()
+
 ##########################################################################
 
 ##########################################################################
@@ -199,7 +193,7 @@ rm(dt_mutate_0_no_sbc_pisco, dt_mutate_0_pisco, dt_mutate_0_pisco_1, dt_mutate_0
 ### resolution for PISCO datasets
 
 ### check for NAs
-na_count_per_column <- sapply(dt_mutate_05, function(x) sum(is.na(x)))
+na_count_per_column <- sapply(dt_mutate_1, function(x) sum(is.na(x)))
 print(na_count_per_column) #yay
 
 ### checking to make sure syntax below was correct with AC on 7/19/24
@@ -214,39 +208,37 @@ print(na_count_per_column) #yay
 #       select(scientific_name, nind_ug_hr, density_num_m, total_nitrogen, total_nitrogen_m) |> 
 #       mutate(test = nind_ug_hr*density_num_m)
 
-dt_spp <- dt_mutate_05 |> 
-      group_by(project, habitat, year, month, site, subsite_level1, subsite_level2, subsite_level3, diet_cat, scientific_name) |> 
+dt_troph <- dt_mutate_1 |> 
+      group_by(project, habitat, year, month, site, subsite_level1, subsite_level2, subsite_level3, diet_cat) |> 
       summarize(
             ### calculate total nitrogen supply at each sampling unit and then sum to get column with all totals
-            spp_nitrogen_m = sum(nind_ug_hr * density_num_m, na.rm = TRUE),
-            spp_nitrogen_m2 = sum(nind_ug_hr * density_num_m2, na.rm = TRUE),
+            troph_nitrogen_m = sum(nind_ug_hr * density_num_m, na.rm = TRUE),
+            troph_nitrogen_m2 = sum(nind_ug_hr * density_num_m2, na.rm = TRUE),
             # total_nitrogen_m3 = sum(nind_ug_hr * density_num_m3, na.rm = TRUE),
             ### create column with total_nitrogen contribution for each program, regardless of units
-            spp_nitrogen = sum(spp_nitrogen_m + spp_nitrogen_m2, na.rm = TRUE),
+            troph_nitrogen = sum(troph_nitrogen_m + troph_nitrogen_m2, na.rm = TRUE),
             ### calculate total phosphorus supply at each sampling unit and then sum to get column with all totals
-            spp_phosphorus_m = sum(pind_ug_hr * density_num_m, na.rm = TRUE),
-            spp_phosphorus_m2 = sum(pind_ug_hr * density_num_m2, na.rm = TRUE),
+            troph_phosphorus_m = sum(pind_ug_hr * density_num_m, na.rm = TRUE),
+            troph_phosphorus_m2 = sum(pind_ug_hr * density_num_m2, na.rm = TRUE),
             # total_phosphorus_m3 = sum(pind_ug_hr * density_num_m3, na.rm = TRUE),
             ### create column with total_phosphorus contribution for each program, regardless of units
-            spp_phosphorus = sum(spp_phosphorus_m + spp_phosphorus_m2, na.rm = TRUE),
+            troph_phosphorus = sum(troph_phosphorus_m + troph_phosphorus_m2, na.rm = TRUE),
             ### calculate total biomass at each sampling unit and then sum to get column with all totals
-            spp_bm_m = sum(dmperind_g_ind*density_num_m, na.rm = TRUE),
-            spp_bm_m2 = sum(dmperind_g_ind*density_num_m2, na.rm = TRUE),
+            troph_bm_m = sum(dmperind_g_ind*density_num_m, na.rm = TRUE),
+            troph_bm_m2 = sum(dmperind_g_ind*density_num_m2, na.rm = TRUE),
             # total_bm_m3 = sum(dmperind_g_ind*density_num_m3, na.rm = TRUE),
             ### create column with total_biomass for each program, regardless of units
-            spp_biomass = sum(spp_bm_m + spp_bm_m2, na.rm = TRUE)) |> 
-            # spp_mean_size = mean(dmperind_g_ind[dmperind_g_ind !=0]),
-            # spp_max_size = max(dmperind_g_ind[dmperind_g_ind !=0])) |> 
+            troph_biomass = sum(troph_bm_m + troph_bm_m2, na.rm = TRUE),
+            max_size = mean(max_size, na.rm = TRUE)) |> 
       ungroup() |>
-      dplyr::select(-spp_nitrogen_m, -spp_nitrogen_m2,
-                    -spp_phosphorus_m, -spp_phosphorus_m2,
-                    -spp_bm_m, -spp_bm_m2) |>
-      arrange(project, scientific_name, diet_cat, habitat, year, month, site, 
-              subsite_level1, subsite_level2, subsite_level3) |> 
+      dplyr::select(-troph_nitrogen_m, -troph_nitrogen_m2,
+                    -troph_phosphorus_m, -troph_phosphorus_m2,
+                    -troph_bm_m, -troph_bm_m2) |>
+      arrange(project, diet_cat, habitat, year, month, site, subsite_level1, subsite_level2, subsite_level3) |> 
       rename(troph_group = diet_cat)
 
 ### check for NAs
-na_count_per_column <- sapply(dt_spp, function(x) sum(is.na(x)))
+na_count_per_column <- sapply(dt_troph, function(x) sum(is.na(x)))
 print(na_count_per_column) #yay
 
 ###########################################################################
@@ -263,19 +255,19 @@ strata_list1 <- strata_list %>%
       distinct()
 
 ### join together the datasets of nutrient supply and biomass with strata
-dt_spp_strata <- left_join(dt_spp, 
-                             strata_list1, 
-                             by = c("project", "habitat", "site",
-                                    "subsite_level1", "subsite_level2")) |> 
+dt_troph_strata <- left_join(dt_troph, 
+                           strata_list1, 
+                           by = c("project", "habitat", "site",
+                                  "subsite_level1", "subsite_level2")) |> 
       unite("projecthabitat", project, habitat, sep = "-", remove = FALSE) |> 
       rename(strata = ecoregion_habitat) |> 
       select(project, habitat, projecthabitat, strata, year, month, site, subsite_level1, 
              subsite_level2, subsite_level3, everything())
 
 ### Check NAs
-na_count_per_column <- sapply(dt_spp_strata, function(x) sum(is.na(x)))
+na_count_per_column <- sapply(dt_troph_strata, function(x) sum(is.na(x)))
 print(na_count_per_column) #yayay
-glimpse(dt_spp_strata)
+glimpse(dt_troph_strata)
 
 ###########################################################################
 # set up individual projects/habitats for analyses and plotting -----------
@@ -289,7 +281,7 @@ glimpse(dt_spp_strata)
 # individually
 
 ### CoastalCA-ocean
-pisco_central <- dt_spp_strata |> 
+pisco_central <- dt_troph_strata |> 
       filter(projecthabitat == "CoastalCA-ocean",
              site == "CENTRAL") |> #split pisco into central and southern
       mutate(group = subsite_level2,
@@ -299,7 +291,7 @@ pisco_central <- dt_spp_strata |>
       ### added new resolution group wants considered for examination -> functionally the "site" for each project
       unite(color2, c(subsite_level2, color), sep = "-", remove = FALSE)
 
-pisco_south <- dt_spp_strata |> 
+pisco_south <- dt_troph_strata |> 
       filter(projecthabitat == "CoastalCA-ocean",
              site == "SOUTH") |> #split pisco into central and southern
       mutate(group = subsite_level2,
@@ -310,7 +302,7 @@ pisco_south <- dt_spp_strata |>
       unite(color2, c(subsite_level2, color), sep = "-", remove = FALSE)
 
 ### FCE-estuary
-fce <- dt_spp_strata |> 
+fce <- dt_troph_strata |> 
       filter(projecthabitat == "FCE-estuary") |>
       mutate(group = subsite_level1,
              color = strata,
@@ -319,7 +311,7 @@ fce <- dt_spp_strata |>
       unite(color2, c(site, subsite_level1), sep = "-", remove = FALSE)
 
 ### MCR-ocean
-mcr <- dt_spp_strata |> 
+mcr <- dt_troph_strata |> 
       filter(projecthabitat == "MCR-ocean") |> 
       ### join site and subsite_level1 according DB request for grouping variable
       unite("group", site, subsite_level1, sep = "-", remove = FALSE) |>
@@ -330,7 +322,7 @@ mcr <- dt_spp_strata |>
       unite(color2, c(subsite_level1, site), sep = "-", remove = FALSE)
 
 ### SBC-ocean
-sbc <- dt_spp_strata |> 
+sbc <- dt_troph_strata |> 
       filter(projecthabitat == "SBC-ocean") |> 
       mutate(group = site,
              color = strata,
@@ -339,7 +331,7 @@ sbc <- dt_spp_strata |>
       unite(color2, c(site, color), sep = "-", remove = FALSE)
 
 ### VCR-estuary
-vcr <- dt_spp_strata |> 
+vcr <- dt_troph_strata |> 
       filter(projecthabitat == "VCR-estuary") |> 
       mutate(group = subsite_level1,
              color = strata,
@@ -403,49 +395,41 @@ summary(dat_ready_3)
 
 ### summarize all sites measured within the dataset annualy, then across period of record
 model_dt <- dat_ready_3 |> 
-      group_by(program, scientific_name, troph_group, habitat, site, year) |> 
-      summarize(total_nitrogen_ann = mean(spp_nitrogen),
-                total_phosphorus_ann = mean(spp_phosphorus),
-                total_biomass_ann = mean(spp_biomass),
-                mean_size_ann = mean(),
-                max_size_ann = mean()) |> 
+      group_by(program, troph_group, habitat, site, year) |> 
+      summarize(total_nitrogen_ann = mean(troph_nitrogen),
+                total_phosphorus_ann = mean(troph_phosphorus),
+                total_biomass_ann = mean(troph_biomass)) |> 
       ungroup() |> 
-      group_by(program, scientific_name, troph_group, habitat, site) |> 
-      summarize(spp_mean_n = mean(total_nitrogen_ann),
-                spp_sd_n = sd(total_nitrogen_ann),
-                spp_cv_n = (sd(total_nitrogen_ann, na.rm = TRUE) / mean(total_nitrogen_ann, na.rm = TRUE)),
-                spp_n_stability = 1/spp_cv_n,
-                spp_mean_p = mean(total_phosphorus_ann),
-                spp_sd_p = sd(total_phosphorus_ann),
-                spp_cv_p = (sd(total_phosphorus_ann, na.rm = TRUE) / mean(total_phosphorus_ann, na.rm = TRUE)),
-                spp_p_stability = 1/spp_cv_p,
-                spp_mean_bm = mean(total_biomass_ann),
-                spp_sd_bm = sd(total_biomass_ann),
-                spp_cv_bm = (sd(total_biomass_ann, na.rm = TRUE) / mean(total_biomass_ann, na.rm = TRUE)),
-                spp_bm_stability = 1/spp_cv_bm,
-                spp_mean_size = mean(mean_size_ann),
-                spp_sd_mean_size = sd(mean_size_ann),
-                spp_max_size = mean(max_size_ann),
-                spp_sd_max_size = sd(max_size_ann)) |> 
+      group_by(program, troph_group, habitat, site) |> 
+      summarize(troph_mean_n = mean(total_nitrogen_ann),
+                troph_sd_n = sd(total_nitrogen_ann),
+                troph_cv_n = (sd(total_nitrogen_ann, na.rm = TRUE) / mean(total_nitrogen_ann, na.rm = TRUE)),
+                troph_n_stability = 1/troph_cv_n,
+                troph_mean_p = mean(total_phosphorus_ann),
+                troph_sd_p = sd(total_phosphorus_ann),
+                troph_cv_p = (sd(total_phosphorus_ann, na.rm = TRUE) / mean(total_phosphorus_ann, na.rm = TRUE)),
+                troph_p_stability = 1/troph_cv_p,
+                troph_mean_bm = mean(total_biomass_ann),
+                troph_sd_bm = sd(total_biomass_ann),
+                troph_cv_bm = (sd(total_biomass_ann, na.rm = TRUE) / mean(total_biomass_ann, na.rm = TRUE)),
+                troph_bm_stability = 1/troph_cv_bm) |> 
       ungroup()
 
 model_dt_1 <- model_dt |> 
-      filter(spp_mean_bm != 0,
-             spp_mean_n != 0,
-             spp_bm_stability <= 4)
+      filter(troph_mean_bm != 0)
 
 glimpse(model_dt_1)
 
 ### look into Sys.Date() function for automatically updating data in files that I read out
 
 model_dt_1 |>
-      ggplot(aes(spp_n_stability, spp_p_stability))+
+      ggplot(aes(troph_n_stability, troph_p_stability))+
       geom_point()+
       geom_abline()
 
 model_dt_1 |>
-      ggplot(aes(spp_bm_stability, spp_n_stability))+
+      ggplot(aes(troph_bm_stability, troph_n_stability))+
       geom_point()+
       geom_abline()
 
-# write_csv(model_dt_1, "local_data/species-level-nutrient-stability_10182024.csv")
+# write_csv(model_dt_1, "local_data/trophic-level-nutrient-stability_10172024.csv")
