@@ -12,7 +12,12 @@
 ### install.packages("librarian")
 librarian::shelf(tidyverse, readxl, glmmTMB, MuMIn, sjPlot, lme4, corrplot, performance, ggeffects, ggpubr, parameters)
 
-dat <- read_csv('local_data/dsr-eco-org-raw.csv')
+dat <- read_csv('local_data/dsr-eco-org-raw.csv') |> 
+      rename(Program = program,
+             Trophic_Group = troph_group,
+             Species = scientific_name,
+             Habitat = habitat,
+             Site = site)
 
 dat_scaled <- dat |> 
       select(program, troph_group, scientific_name, habitat, site, everything()) |> 
