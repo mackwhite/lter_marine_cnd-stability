@@ -49,7 +49,7 @@ random_effects$Program[, , "mean_trophic_diversity"]
 
 troph_turnover_effect_dsr <- ggpredict(test, 
                                        type = "re",
-                                       terms = c('synch[-2.1:3.4 by=0.1]', 'Program')
+                                       terms = c('beta_time[-2.1:3.4 by=0.1]', 'Program')
                                        )
 plot(troph_turnover_effect_dsr)
 

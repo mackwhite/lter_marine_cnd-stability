@@ -20,11 +20,13 @@ dat <- read_csv('local_data/dsr-eco-org-raw.csv') |>
              Site = site)
 
 dat_scaled <- dat |> 
-      select(Program, Trophic_Group, Species, Habitat, Site, everything()) |> 
+      select(Program, Trophic_Group, Species, Habitat, Site, comm_n_stability, everything()) |> 
+      mutate(comm_n_stability = scale(comm_n_stability)) |> 
       group_by(Program) |> 
       ## this is a function syntax
       mutate(across(comm_mean_bm:troph_synch,\(x) scale(x, center = TRUE))) |>
       ungroup()
+
 glimpse(dat_scaled)
 
 dat_ready <- dat_scaled |> 
