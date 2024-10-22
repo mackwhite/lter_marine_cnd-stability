@@ -140,8 +140,6 @@ mean_variance_2 <- annotate_figure(mean_variance,
 # ggsave("output/ms-second-round/plots/two-panel-mean-variance-BEF.tiff", units = "in", width = 12,
 #        height = 6, dpi =  600, compression = "lzw")
 
-
-
 dat1 <- dat |> 
       group_by(Program, Habitat, Site, Trophic_Group, Species) |> 
       mutate(spp_dominance = spp_mean_n/comm_mean_n) |> 

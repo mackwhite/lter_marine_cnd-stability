@@ -46,3 +46,22 @@ ggcoef_table(test)
 
 # View the random slopes for 'x' across groups
 random_effects$Program[, , "mean_trophic_diversity"]
+
+troph_turnover_effect_dsr <- ggpredict(test, 
+                                       type = "re",
+                                       terms = c('synch[-2.1:3.4 by=0.1]', 'Program')
+                                       )
+plot(troph_turnover_effect_dsr)
+
+random_slopes <- ranef(test)$Program[, , "troph_beta_time"]
+random_slopes_df <- as.data.frame(random_slopes)
+random_slopes_df$group <- rownames(random_slopes_df)  # Add group names
+colnames(random_slopes_df) <- c("random_slope", "group")
+
+ggplot(random_slopes_df, aes(x = group, y = random_slope)) +
+      geom_point() +
+      labs(title = "Random Slopes for Each Group",
+           x = "Group",
+           y = "Random Slope for x") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) 

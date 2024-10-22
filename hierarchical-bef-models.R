@@ -20,7 +20,8 @@ dat <- read_csv('local_data/dsr-eco-org-raw.csv') |>
              Site = site)
 
 dat_scaled <- dat |> 
-      select(Program, Trophic_Group, Species, Habitat, Site, everything()) |> 
+      mutate(comm_mean_n = scale(comm_mean_n)) |> 
+      select(Program, Trophic_Group, Species, Habitat, Site, comm_n_stability, everything()) |> 
       group_by(Program) |> 
       ## this is a function syntax
       mutate(across(comm_mean_bm:spp_bm_stability,\(x) scale(x, center = TRUE))) |>
