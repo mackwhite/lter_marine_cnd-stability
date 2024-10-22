@@ -1,8 +1,8 @@
 ###project: LTER Marine Consumer Nutrient Dynamic Synthesis Working Group
 ###author(s): Mack White
-###goal(s): visualizations of interest
+###goal(s): visualize scaled dsr relationships across various scales of organization
 ###date(s): October 2024
-###note(s): testing repo name change again again
+###note(s): 
 
 ###########################################################################
 # Housekeeping ------------------------------------------------------------
@@ -20,18 +20,13 @@ dat <- read_csv('local_data/dsr-eco-org-raw.csv') |>
              Site = site)
 
 dat_scaled <- dat |> 
-      select(program, troph_group, scientific_name, habitat, site, everything()) |> 
-      group_by(program) |> 
+      select(Program, Trophic_Group, Species, Habitat, Site, everything()) |> 
+      group_by(Program) |> 
       ## this is a function syntax
       mutate(across(comm_mean_bm:spp_bm_stability,\(x) scale(x, center = TRUE))) |>
       ungroup() |> 
       filter(spp_n_stability <=7,
-             comm_n_stability >=-2.5) |> 
-      rename(Program = program,
-             Trophic_Group = troph_group,
-             Species = scientific_name,
-             Habitat = habitat,
-             Site = site)
+             comm_n_stability >=-2.5)
 glimpse(dat_scaled)
 
 # species richness on x axis ----------------------------------------------
@@ -104,13 +99,23 @@ spp_rich_comm_stab <- dat_scaled |>
 
 p1 <- ggarrange(spp_rich_spp_stab, spp_rich_troph_stab, spp_rich_comm_stab,
                 labels = c('a)','b)','c)'),
-                # legend = 'bottom', common.legend = TRUE,
+                legend = 'bottom', common.legend = TRUE,
                 ncol = 3, nrow = 1, align = "h", hjust = 0.5)
 
 p1a <- annotate_figure(p1,
                        bottom = text_grob(label = "Scaled Species Richness",
                                         just = 'centre', rot = 0,
                                         color = "black", face = "bold"))
+
+p1av2 <- annotate_figure(p1,
+                       bottom = text_grob(label = "Scaled Species Richness",
+                                          just = 'centre', rot = 0,
+                                          color = "black", face = "bold"),
+                       left = text_grob(label = "Scaled Nitrogen Supply Stability",
+                                        just = 'centre', rot = 90,
+                                        color = "black", face = "bold"))
+# ggsave("output/ms-second-round/plots/three-panel-spprich-across-ecological-levels.tiff", units = "in", width = 12,
+#        height = 4, dpi =  600, compression = "lzw")
 
 # species diversity on x axis ---------------------------------------------
 
@@ -190,6 +195,16 @@ p2a <- annotate_figure(p2,
                                           just = 'centre', rot = 0,
                                           color = "black", face = "bold"))
 
+p2av2 <- annotate_figure(p2,
+                         bottom = text_grob(label = "Scaled Species Diversity",
+                                            just = 'centre', rot = 0,
+                                            color = "black", face = "bold"),
+                         left = text_grob(label = "Scaled Nitrogen Supply Stability",
+                                          just = 'centre', rot = 90,
+                                          color = "black", face = "bold"))
+# ggsave("output/ms-second-round/plots/three-panel-sppdiv-across-ecological-levels.tiff", units = "in", width = 12,
+#        height = 4, dpi =  600, compression = "lzw")
+
 # trophic richness on x axis ----------------------------------------------
 
 model <- lm(spp_n_stability ~ mean_trophic_richness, data = dat_scaled)
@@ -268,6 +283,15 @@ p3a <- annotate_figure(p3,
                                           just = 'centre', rot = 0,
                                           color = "black", face = "bold"))
 
+p3av2 <- annotate_figure(p3,
+                         bottom = text_grob(label = "Scaled Trophic Richness",
+                                            just = 'centre', rot = 0,
+                                            color = "black", face = "bold"),
+                         left = text_grob(label = "Scaled Nitrogen Supply Stability",
+                                          just = 'centre', rot = 90,
+                                          color = "black", face = "bold"))
+# ggsave("output/ms-second-round/plots/three-panel-trophrich-across-ecological-levels.tiff", units = "in", width = 12,
+#        height = 4, dpi =  600, compression = "lzw")
 # trophic diversity on x axis ----------------------------------------------
 
 model <- lm(spp_n_stability ~ mean_trophic_diversity, data = dat_scaled)
@@ -345,6 +369,16 @@ p4a <- annotate_figure(p4,
                        bottom = text_grob(label = "Scaled Trophic Diversity",
                                           just = 'centre', rot = 0,
                                           color = "black", face = "bold"))
+
+p4av2 <- annotate_figure(p4,
+                         bottom = text_grob(label = "Scaled Trophic Diversity",
+                                            just = 'centre', rot = 0,
+                                            color = "black", face = "bold"),
+                         left = text_grob(label = "Scaled Nitrogen Supply Stability",
+                                          just = 'centre', rot = 90,
+                                          color = "black", face = "bold"))
+# ggsave("output/ms-second-round/plots/three-panel-trophdiv-across-ecological-levels.tiff", units = "in", width = 12,
+#        height = 4, dpi =  600, compression = "lzw")
 
 p5 <- ggarrange(p1a,p2a,p3a,p4a,
                 legend = 'bottom', common.legend = TRUE,
@@ -437,6 +471,16 @@ p6a <- annotate_figure(p6,
                                           just = 'centre', rot = 0,
                                           color = "black", face = "bold"))
 
+p6av2 <- annotate_figure(p6,
+                         bottom = text_grob(label = "Scaled Temporal Turnover",
+                                            just = 'centre', rot = 0,
+                                            color = "black", face = "bold"),
+                         left = text_grob(label = "Scaled Nitrogen Supply Stability",
+                                          just = 'centre', rot = 90,
+                                          color = "black", face = "bold"))
+# ggsave("output/ms-second-round/plots/three-panel-tempturnover-across-ecological-levels.tiff", units = "in", width = 12,
+#        height = 4, dpi =  600, compression = "lzw")
+
 # synchrony on x axis -----------------------------------------------------
 
 model <- lm(spp_n_stability ~ synch, data = dat_scaled)
@@ -515,6 +559,16 @@ p7a <- annotate_figure(p7,
                                           just = 'centre', rot = 0,
                                           color = "black", face = "bold"))
 
+p7av2 <- annotate_figure(p7,
+                         bottom = text_grob(label = "Scaled Temporal Synchrony",
+                                            just = 'centre', rot = 0,
+                                            color = "black", face = "bold"),
+                         left = text_grob(label = "Scaled Nitrogen Supply Stability",
+                                          just = 'centre', rot = 90,
+                                          color = "black", face = "bold"))
+# ggsave("output/ms-second-round/plots/three-panel-tempsynchrony-across-ecological-levels.tiff", units = "in", width = 12,
+#        height = 4, dpi =  600, compression = "lzw")
+
 p8 <- ggarrange(p6a,p7a,
                 legend = 'bottom', common.legend = TRUE,
                 ncol = 1, nrow = 2, align = 'h')
@@ -526,3 +580,25 @@ p8a <- annotate_figure(p8,
 
 # ggsave("output/ms-second-round/plots/six-panel-mechanisms-across-ecological-levels.tiff", units = "in", width = 12,
 #        height = 12, dpi =  600, compression = "lzw")
+
+model <- lm(troph_n_stability ~ spp_n_stability, data = dat_scaled)
+r2 <- summary(model)$r.squared
+# dat_scaled |> 
+#       ggplot(aes(x = spp_n_stability, y = troph_n_stability)) +
+#       geom_point(fill = 'white', color = 'darkgrey', stroke = 0.5) + 
+#       geom_smooth(method = "lm", color = 'black', linewidth = 2, se = FALSE) + 
+#       geom_smooth(aes(color = Program), method = 'lm', se = FALSE) +
+#       annotate("text", x = Inf, y = Inf, label = paste("R² =", round(r2, 3)),
+#                vjust = 1.5, hjust = 1.1, size = 5, color = "black", fontface = "bold") +
+#       labs(x = "Community-Level Stability",
+#            y = "Species-Level Stability") +
+#       theme_classic() +
+#       theme(axis.text.x = element_text(face = "bold", color = "black"),
+#             axis.text.y = element_text(face = "bold", color = "black"),
+#             # axis.title.x = element_text(face = "bold", color = "black"),
+#             axis.title.x = element_blank(),
+#             # axis.title.y = element_text(face = "bold", color = "black"),
+#             axis.title.y = element_blank(),
+#             legend.position = "none",
+#             legend.text = element_text(face = "bold", color = "black"),
+#             legend.title = element_text(face = "bold", color = "black"))

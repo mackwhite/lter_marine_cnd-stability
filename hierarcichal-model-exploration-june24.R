@@ -1,6 +1,6 @@
 ###project: LTER Marine Consumer Nutrient Dynamic Synthesis Working Group
 ###author(s): Mack White
-###goal(s): hierarchical models for species evenness and richness
+###goal(s): hierarchical models for dsr relationships
 ###date(s): June 2024
 ###note(s): testing repo name change again again
 

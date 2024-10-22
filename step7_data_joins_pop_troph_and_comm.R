@@ -30,23 +30,37 @@ cnd_comm <- read_csv("local_data/community-level-nutrient-stability_10172024.csv
              habitat = as.factor(habitat),
              site = as.factor(site))
 
-turnsynch <- read_csv("local_data/turnover_synchrony_08012024.csv") |> 
+turnsynch_pop <- read_csv("local_data/turnover_synchrony_08012024.csv") |> 
       mutate(program = as.factor(program),
              habitat = as.factor(habitat),
              site = as.factor(site))
 
-comm_cnd_div_mech <- left_join(cnd_comm, turnsynch, by = c("program", "habitat", "site"))
+### calculating trophic turnover and synchrony
+turnsynch_troph <- read_csv("local_data/trophic_turnover_synchrony_10222024.csv") |> 
+      mutate(program = as.factor(program),
+             habitat = as.factor(habitat),
+             site = as.factor(site)) |> 
+      rename(troph_beta_time = beta_time,
+             troph_synch = synch)
+
+comm_cnd_div_mech <- left_join(cnd_comm, turnsynch_pop, by = c("program", "habitat", "site"))
 
 all <- left_join(comm_cnd_div_mech, cnd_troph, by = c("program", "habitat", "site"))
 
 df_raw <- left_join(all, cnd_pop, by = c("program", "habitat", "site", "troph_group"))
-# write_csv(df_raw, "local_data/dsr-eco-org-raw.csv")
+# write_csv(df_raw, "local_data/dsr-eco-org-raw-10172024.csv")
 
-df_scaled <- df_raw |> 
-      select(program, troph_group, scientific_name, habitat, site, everything()) |> 
-      group_by(program) |> 
-      ## this is a function syntax
-      mutate(across(comm_mean_bm:spp_bm_stability,\(x) scale(x, center = TRUE))) |>
-      ungroup()
+df_raw_wtroph_dynamics <- left_join(df_raw, turnsynch_troph, by = c("program", "habitat", "site"))
+# write_csv(df_raw_wtroph_dynamics, "local_data/dsr-eco-org-raw.csv")
 
-# write_csv(df_scaled, "local_data/dsr-eco-org-scaled.csv")
+df_raw_wtroph_dynamics |> 
+      ggplot(aes(x=troph_synch, y = synch)) +
+      geom_point() +
+      geom_smooth(method = "lm") + 
+      facet_wrap(~program, scales = "free")
+
+df_raw_wtroph_dynamics |> 
+      ggplot(aes(x=troph_beta_time, y = beta_time)) +
+      geom_point() +
+      geom_smooth(method = "lm") + 
+      facet_wrap(~program, scales = "free")
